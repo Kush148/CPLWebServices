@@ -87,13 +87,14 @@ public class LeagueManager {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("addteammanager&{userName}&{email}&{password}&{dob}&{contactNumber}")
-    public String addTeamManager(@PathParam("userName") String userName,
-            @PathParam("email") String email, @PathParam("password") String password, @PathParam("dob") String dob,
+    @Path("addTeamManager&{managerName}&{email}&{mPassword}&{dob}&{contactNumber}")
+    public String addTeamManager(@PathParam("managerName") String managerName,
+            @PathParam("email") String email, @PathParam("mPassword") String mPassword, @PathParam("dob") String dob,
             @PathParam("contactNumber") String contactNumber) {
 
         JSONObject jsonObject = null;
         PreparedStatement stmt = null;
+        PreparedStatement stmt1 = null;
         String sql;
         String sql1;
         String status = "OK";
@@ -107,16 +108,22 @@ public class LeagueManager {
             sql = "insert into User (userName,email,password,dob,contactNumber) values(?,?,?,?,?)";
             sql1 = "insert  into TeamManager (userId)  select max(userId) from User ";
             stmt = con.prepareStatement(sql);
-            stmt.setString(1, userName);
+            stmt.setString(1, managerName);
             stmt.setString(2, email);
-            stmt.setString(3, password);
+            stmt.setString(3, mPassword);
             stmt.setString(4, dob);
             stmt.setString(5, contactNumber);
 
             int rs = stmt.executeUpdate();
 
             if (rs > 0) {
-                message = "Team Manager Created";
+                stmt1 = con.prepareStatement(sql1);
+                int rs1 = stmt1.executeUpdate();
+                if (rs1 > 0) {
+                    message = "Team Manager created";
+                } else {
+                    message = "Error";
+                }
             } else {
                 message = "Error";
             }
@@ -417,15 +424,11 @@ public class LeagueManager {
     }
 
     @GET
-    @Path("insertIntoPointTable&{TeamName}&{TeamName2}&{play}&{Win}&{Lose}&{Points}&{seasonId}&{matchId}")
+    @Path("insertIntoPointTable&{TeamName}&{TeamName2}&{seasonId}&{matchId}")
     @Produces(MediaType.APPLICATION_JSON)
     public String insertIntoPointTable(
             @PathParam("TeamName") String team1,
             @PathParam("TeamName2") String team2,
-            @PathParam("play") int play,
-            @PathParam("Win") int win,
-            @PathParam("Lose") int lose,
-            @PathParam("Points") int point,
             @PathParam("seasonId") int seasonId,
             @PathParam("matchId") int matchId) {
 
@@ -440,7 +443,7 @@ public class LeagueManager {
             Class.forName(classPath);
             con = DriverManager.getConnection(conPath, userName, password);
 
-            sql = "insert into PointTable (TeamName,play,Win,Lose,Points,seasonId,matchId) values(?,?,?,?,?,?,?),(?,?,?,?,?,?,?)";
+            sql = "insert IGNORE into PointTable (TeamName,play,Win,Lose,Points,seasonId,matchId) values(?,?,?,?,?,?,?),(?,?,?,?,?,?,?)";
             stm = con.prepareStatement(sql);
 
             stm.setString(1, team1);
@@ -462,7 +465,7 @@ public class LeagueManager {
             int rs = stm.executeUpdate();
 
             if (rs > 0) {
-                message = "Points Inserted";
+                message = "Team Inserted";
             } else {
                 message = "Error";
             }

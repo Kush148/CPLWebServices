@@ -88,7 +88,7 @@ public class Cpl {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("verifyUser&{userEmail}&{dob}")
-    public String verifyUser(@PathParam("userEmail") String userEmail, @PathParam("dob") String dob) throws ClassNotFoundException {
+    public String verifyUser(@PathParam("userEmail") String userEmail, @PathParam("dob") String dob) {
 
         PreparedStatement stm = null;
         String sql = null;
@@ -118,6 +118,8 @@ public class Cpl {
         } catch (SQLException ex) {
             status = "Error";
             message = ex.getMessage();
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(Cpl.class.getName()).log(Level.SEVERE, null, ex);
         } finally {
             jsonObject = new JSONObject();
             jsonObject.accumulate("Status", status);
@@ -1046,4 +1048,61 @@ public class Cpl {
         }
         return jsonObject.toString();
     }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("removePlayer&{playerId}")
+    public String removePlayer(@PathParam("playerId") int playerId) {
+
+        PreparedStatement stm = null;
+        String sql = null;
+        JSONObject jsonObject = null;
+        String status = "OK";
+        String message = null;
+        Connection con = null;
+
+        try {
+            Class.forName(classPath);
+            con = DriverManager.getConnection(conPath, userName, password);
+
+            sql = "Update Player set teamId=? where playerId=?";
+            stm = con.prepareStatement(sql);
+            stm.setString(1, null);
+            stm.setInt(2,playerId);
+            int rs = stm.executeUpdate();
+
+            if (rs > 0) {
+                message = "Player Removed";
+            } else {
+                message = "Error";
+            }
+
+        } catch (SQLException ex) {
+            status = "Error";
+            message = ex.getMessage();
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(LeagueManager.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            jsonObject = new JSONObject();
+            jsonObject.accumulate("Status", status);
+            jsonObject.accumulate("TimeStamp", timeStamp);
+            jsonObject.accumulate("Message", message);
+            if (con != null) {
+                try {
+                    con.close();
+                } catch (SQLException ex) {
+                    Logger.getLogger(LeagueManager.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                if (stm != null) {
+                    try {
+                        stm.close();
+                    } catch (SQLException ex) {
+                        Logger.getLogger(LeagueManager.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }
+        }
+        return jsonObject.toString();
+    }
+
 }
